@@ -12,7 +12,7 @@ const client = createClient({
   url: "http://0.0.0.0:4000/graphql"
 })
 
-const [todos] = createResource<Todo[]>(() =>
+const [todos, { refetch }] = createResource<Todo[]>(() =>
   client.query(`
     query {
       getTodos{
@@ -26,26 +26,56 @@ const [todos] = createResource<Todo[]>(() =>
     .toPromise()
     .then(({ data }) => data.getTodos)
 )
-console.log('🚀🚀🚀 ~ file: App.tsx ~ line 32 ~ todos', todos())
 
 const App: Component = () => {
   const [text, setText] = createSignal('')
-  const onAdd = ()=>{
+  const onAdd = async () => {
+    await client.mutation(`
+      mutation($text: String!) {
+        addTodo(text: $text){
+          id
+        }
+      }
+    `, {
+      text: text()
+    })
+      .toPromise()
+
+    refetch()
+
     setText("")
   }
+
+  const onToggle = async (id: string, done: boolean) => {
+    client.mutation(`
+      mutation($id: ID!, $done: Boolean!){
+        setDone(id: $id, done: $done){
+          id
+          text
+        }
+      }
+    `, {
+        id,
+        done
+    })
+    .toPromise()
+
+    refetch()
+  }
+
   return (
     <div>
       Todo:
       <For
         each={todos()}>
         {({ id, done, text }) => <div>
-          <input type="checkbox" checked={done} />
+          <input type="checkbox" checked={done} onclick={() => onToggle(id, !done)} />
           <span>{text}</span>
         </div>}
       </For>
-      <div>{text()}</div>
-      <div><input oninput={evt => setText(evt.currentTarget.value)} type="text" value={text()} />
-      <button onclick={onAdd}>Add</button>
+      <div>
+        <input oninput={evt => setText(evt.currentTarget.value)} type="text" value={text()} />
+        <button onclick={onAdd}>Add</button>
       </div>
     </div>
   );

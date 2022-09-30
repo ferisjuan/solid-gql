@@ -41,7 +41,11 @@ const resolvers = {
             return newTodo
         },
         setDone: (_: unknown, { id, done }: { id: string, done: boolean }) => {
-            const todo = todos.find(todo => todo.id === id);
+            console.log('🚀🚀🚀 ~ file: index.ts ~ line 44 ~ done', done)
+            const todo = todos.find(todo => {
+                return todo.id === id
+            })
+            console.log('🚀🚀🚀 ~ file: index.ts ~ line 45 ~ todo', todo)
             if (!todo) throw new Error("Todo not found");
 
             todo.done = done
